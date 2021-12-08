@@ -83,6 +83,7 @@ wire \1/0 , \2/0 , \2/1 , \3/0 , \3/1 , \3/2 , \4/0 , \4/1 , \4/2 , \4/3 ,
     \sf3 , \cf3 , \sf4 , \cf4 , \sf5 , \cf5 , \sf6 , \cf6 , \sf7 , \cf7 , 
     \sf8 , \cf8 , \sf9 , \cf9 , \s201 , \c201 , \sf10 , \cf10 ;
 wire [31:0] in1, in2;
+wire ov;
 
 
 
@@ -589,7 +590,7 @@ fullad csa222(\s76 , \c126 , \c222 , \s223 , \c223 );
 fullad csa223(\1/0 , \c76 , \c223 , \s224 , \c224 );
 
 
-csa32 finaladd(in1, in2, out);
+csa32 finaladd(in1, in2, out, ov);
 
 
 endmodule

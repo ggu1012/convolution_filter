@@ -4,24 +4,25 @@ module do_conv;
     reg rst;
     wire signed [31:0] data_out;
     reg [15:0] data_in;
-    reg data_ready;
+    reg rdata_r;
 
 
     integer file_input [0:19];
     integer file_output [0:19];
     integer din, dout;
 
-    // conv1 k1(.data_in(data_in),
-    //          .data_out(data_out),
-    //          .clk(clk),
-    //          .resetn(rst),
-    //          .data_ready(data_ready)
-    //         );
+    conv1 k1(.data_in(data_in),
+             .data_out(data_out),
+             .clk(clk),
+             .resetn(rst),
+             .rdata_r(rdata_r),
+             .wdata_r(wdata_r)
+            );
 
 
     initial
     begin
-        clk = 1'b0;
+        clk <= 1'b0;
         forever
             #50 clk = ~clk;
     end
@@ -35,18 +36,20 @@ module do_conv;
 
 
         file_input[0] = $fopen("../batch/input_00.txt", "r");
-        file_output[0] = $fopen("../batch/input_00.txt", "w");
+        
 
-        data_ready <= 1;
+        rdata_r = 1;
 
-        $display("%d", $feof(file_input[0]));
-
-        while($feof(file_input[0]) == 0) begin
-            $display("%d", $feof(file_input[0]));
+        repeat (768) begin
             #100 din = $fscanf(file_input[0], "%6d", data_in);
-            $display("%d", $feof(file_input[0]));
-            $display("%2d", data_in);
         end
+
+        rdata_r = 0;
+
+        
+
+
+        file_output[0] = $fopen("../batch/output_00.txt", "w");
 
 
 
