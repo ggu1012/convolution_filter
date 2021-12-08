@@ -1,0 +1,6 @@
+work
+.vscode
+**/*.out
+**/transcript
+**/command.log
+
