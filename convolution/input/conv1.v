@@ -12,6 +12,7 @@ module conv1 (
 reg signed [15:0] mem [0:27][0:2][0:8];
 reg [4:0] row;
 reg [1:0] col;
+reg [2:0] cycle;
 integer i;
 wire signed [287:0] mem_pixel;
 
@@ -41,20 +42,32 @@ always@ (posedge clk or negedge reset_n)
 begin
     if (!reset_n) begin
         data_out <= 0; 
-        row <= 0;
-        col <= 0;
+        row <= -1;     
     end  
-    
-    row <= (row == 5'd27) ? 0 : row + 1;
-    if (row == 5'b0)
-        col <= (2'd3)? 0 : col + 1;
-        
-    if (row >= 2 && col >=2)
-        wdata_r <= 1;    
+
+    else begin    
+        if (rdata_r == 1'b1) begin
+            row <= (row == 5'd27) ? 0 : row + 1;            
+            if (row >= 2 && col >=2) wdata_r <= 1;
+            else wdata_r <= 0;
+        end
+    end
     
 end
 
-always@ (posedge clk) begin
+always@(row, col) begin
+    if (row == 5'b0)
+        col <= (col == 2'd3)? 0 : col + 1;
+    if (col == 2'b0)
+        cycle <= cycle + 1;
+end
+
+always@ (posedge clk or negedge reset_n) begin
+    if (!reset_n) begin
+        col <= -1;
+        cycle <= -1;        
+    end       
+
     if (rdata_r == 1'b1) begin
         for(i=0; i<9; i=i+1)
             mem[row][col][i] <= mem_pixel[32*i +: 32];  
