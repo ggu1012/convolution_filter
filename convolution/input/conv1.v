@@ -16,35 +16,15 @@ reg [4:0] cycle;
 integer i;
 wire signed [287:0] mem_pixel;
 
-reg [31:0] p00, p01, p02, p10, p11, p12, p20, p21, p22;
-wire [31:0] conv_result;
+reg signed [31:0] p00, p01, p02, p10, p11, p12, p20, p21, p22;
+wire signed [31:0] conv_result;
 
-
-kernel_pixel u0(
-    .clk(clk),
-    .pixel(data_in),
-    .weighted_pixel(mem_pixel)
-);
-
-add_weighted u1(
-    .p0(p00),
-    .p1(p01),
-    .p2(p02),
-    .p3(p10),
-    .p4(p11),
-    .p5(p12),
-    .p6(p20),
-    .p7(p21),
-    .p8(p22),
-    .conv_result(conv_result)
-);
 
 always@ (negedge reset_n or posedge clk) begin
     if (!reset_n) begin
         row <= -1;
         col <= 0;
         cycle <= 0;
-        data_out <= 0;
     end
     else begin
 
@@ -68,8 +48,6 @@ end
 
 
 always@(*) begin   
-
-
     // wdata_r signal
     if (cycle == 0) begin
         if (col == 2'd2)
@@ -78,13 +56,21 @@ always@(*) begin
             wdata_r <= 0;         
     end
     else
-        wdata_r <= (row >= 2) ? 1 : 0;    
+        wdata_r <= (row >= 2) ? 1 : 0;   
+
 
     if (rdata_r == 1'b1) begin
         for(i=0; i<9; i=i+1)
             mem[row][col][i] <= mem_pixel[32*i +: 32];  
     end 
+    else begin
+        for(i=0; i<9; i=i+1)
+            mem[row][col][i] <= 32'd0;          
+    end
 
+end
+
+always@(posedge clk) begin
     if (wdata_r == 1) begin
         if (col == 2'd2) begin
             p00 <= mem[row-2][col-2][0]; p01 <= mem[row-1][col-2][1]; p02 <= mem[row][col-2][2];
@@ -103,12 +89,42 @@ always@(*) begin
         end
     end
 
-
-    data_out <= conv_result;
-
+    else begin
+        p00 <= 0; p01 <= 0; p02 <= 0;
+        p10 <= 0; p11 <= 0; p12 <= 0;
+        p20 <= 0; p21 <= 0; p22 <= 0;       
+    end
 end
 
+always@(conv_result) begin
+    if (wdata_r == 1) 
+        data_out <= conv_result;
+    else
+        data_out <= 0;
+end
+
+kernel_pixel u0(
+    .clk(clk),
+    .pixel(data_in),
+    .weighted_pixel(mem_pixel)
+);
+
+add_weighted u1(
+    .p0(p00),
+    .p1(p01),
+    .p2(p02),
+    .p3(p10),
+    .p4(p11),
+    .p5(p12),
+    .p6(p20),
+    .p7(p21),
+    .p8(p22),
+    .conv_result(conv_result)
+);
+
 endmodule
+
+
 
 module kernel_pixel(
     input clk,
