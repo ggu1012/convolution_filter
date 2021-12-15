@@ -3,4 +3,6 @@ work
 **/*.out
 **/transcript
 **/command.log
+input/do_conv.v
+pyfiles
 
