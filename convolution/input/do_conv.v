@@ -69,7 +69,7 @@ module do_conv;
         #50 rst <= 1'b0;
         #100 rst <= 1'b1;
         #50 rdata <= 1;
-        repeat (787) @(posedge clk) begin // 784+1 for data transmission with 1 clock delay            
+        repeat (788) @(posedge clk) begin // 784+1 for data transmission with 1 clock delay            
             din <= $fscanf(file_input[0], "%6d", data_in);
             #100;
             if (wdata == 1)     

@@ -23,29 +23,29 @@ reg wdata;
 
 reg [4:0] xxxx;
 reg [4:0] row_delay_1d;
-reg [4:0] row_delay_2d;
 reg [1:0] col_delay_1d;
+reg [4:0] row_delay_2d;
 reg [1:0] col_delay_2d;
-reg [1:0] wdata_delay;
+reg [2:0] wdata_delay;
 
-// reset
-always@(negedge reset_n) begin
-    wdata <= 1'b0;
-    cycle <= -32'd1;
-end
+// wdata signal and reset
+always@(row or col or reset_n) begin
 
-
-// wdata signal
-always@(row or col) begin
-    cycle <= (row == 5'd0 && col == 2'd0)? cycle + 1 : cycle;
-    if (cycle == 5'b0) begin
-        if (col == 2'd2)
-            wdata <= (row >= 5'd2 && row <= 5'd27) ? 1 : 0;
-        else
-            wdata <= 0;
+    if (!reset_n) begin
+        wdata <= 1'b0;
+        cycle <= -32'd1;
     end
-    else
-        wdata <= (row >= 5'd2 && row <= 5'd27) ? 1 : 0;
+    else begin
+        cycle <= (row == 5'd0 && col == 2'd0)? cycle + 1 : cycle;
+        if (cycle == 5'b0) begin
+            if (col == 2'd2)
+                wdata <= (row >= 5'd2 && row <= 5'd27) ? 1 : 0;
+            else
+                wdata <= 0;
+        end
+        else
+            wdata <= (row >= 5'd2 && row <= 5'd27) ? 1 : 0;
+    end
 end
 
 always@(posedge clk) begin
@@ -56,7 +56,8 @@ always@(posedge clk) begin
 
     wdata_delay[0] <= wdata;
     wdata_delay[1] <= wdata_delay[0];
-    wdata_fin <= wdata_delay[1];
+    wdata_delay[2] <= wdata_delay[1];
+    wdata_fin <= wdata_delay[2];
 end
 
 // stage 0
@@ -66,31 +67,32 @@ kernel_pixel u0(
     .weighted_pixel(mem_pixel)
 );
 
-
-always@(*) begin 
+// stage 1
+always@(posedge clk) begin 
     for(i=0; i<9; i=i+1) begin
         mem[row_delay_1d][col_delay_1d][i] <= mem_pixel[32*i +: 32];
         tmp1 <= mem_pixel[32*i +: 32];
     end
 end
 
-// stage 1
+// stage 2
 always@(posedge clk) begin
-    if (wdata_delay[0] == 1) begin
-        if (col_delay_1d == 2'd2) begin
-            p00 <= mem[row_delay_1d-2][col_delay_1d-2][0]; p01 <= mem[row_delay_1d-1][col_delay_1d-2][1]; p02 <= mem[row_delay_1d][col_delay_1d-2][2];
-            p10 <= mem[row_delay_1d-2][col_delay_1d-1][3]; p11 <= mem[row_delay_1d-1][col_delay_1d-1][4]; p12 <= mem[row_delay_1d][col_delay_1d-1][5];
-            p20 <= mem[row_delay_1d-2][col_delay_1d][6]; p21 <= mem[row_delay_1d-1][col_delay_1d][7]; p22 <= mem[row_delay_1d][col_delay_1d][8];       
+    if (wdata_delay[1] == 1) begin
+        if (col_delay_2d == 2'd2) begin
+            xxxx <= row_delay_2d;
+            p00 <= mem[row_delay_2d-2][col_delay_2d-2][0]; p01 <= mem[row_delay_2d-1][col_delay_2d-2][1]; p02 <= mem[row_delay_2d][col_delay_2d-2][2];
+            p10 <= mem[row_delay_2d-2][col_delay_2d-1][3]; p11 <= mem[row_delay_2d-1][col_delay_2d-1][4]; p12 <= mem[row_delay_2d][col_delay_2d-1][5];
+            p20 <= mem[row_delay_2d-2][col_delay_2d][6]; p21 <= mem[row_delay_2d-1][col_delay_2d][7]; p22 <= mem[row_delay_2d][col_delay_2d][8];       
         end
-        else if (col_delay_1d == 2'd0) begin            
-            p00 <= mem[row_delay_1d-2][col_delay_1d][6]; p01 <= mem[row_delay_1d-1][col_delay_1d][7]; p02 <= mem[row_delay_1d][col_delay_1d][8];
-            p10 <= mem[row_delay_1d-2][col_delay_1d+1][0]; p11 <= mem[row_delay_1d-1][col_delay_1d+1][1]; p12 <= mem[row_delay_1d][col_delay_1d+1][2];
-            p20 <= mem[row_delay_1d-2][col_delay_1d+2][3]; p21 <= mem[row_delay_1d-1][col_delay_1d+2][4]; p22 <= mem[row_delay_1d][col_delay_1d+2][5];                  
+        else if (col_delay_2d == 2'd0) begin            
+            p00 <= mem[row_delay_2d-2][col_delay_2d][6]; p01 <= mem[row_delay_2d-1][col_delay_2d][7]; p02 <= mem[row_delay_2d][col_delay_2d][8];
+            p10 <= mem[row_delay_2d-2][col_delay_2d+1][0]; p11 <= mem[row_delay_2d-1][col_delay_2d+1][1]; p12 <= mem[row_delay_2d][col_delay_2d+1][2];
+            p20 <= mem[row_delay_2d-2][col_delay_2d+2][3]; p21 <= mem[row_delay_2d-1][col_delay_2d+2][4]; p22 <= mem[row_delay_2d][col_delay_2d+2][5];                  
         end
-        else if (col_delay_1d == 2'd1) begin
-            p00 <= mem[row_delay_1d-2][col_delay_1d-1][3]; p01 <= mem[row_delay_1d-1][col_delay_1d-1][4]; p02 <= mem[row_delay_1d][col_delay_1d-1][5];
-            p10 <= mem[row_delay_1d-2][col_delay_1d][6]; p11 <= mem[row_delay_1d-1][col_delay_1d][7]; p12 <= mem[row_delay_1d][col_delay_1d][8];
-            p20 <= mem[row_delay_1d-2][col_delay_1d+1][0]; p21 <= mem[row_delay_1d-1][col_delay_1d+1][1]; p22 <= mem[row_delay_1d][col_delay_1d+1][2];  
+        else if (col_delay_2d == 2'd1) begin
+            p00 <= mem[row_delay_2d-2][col_delay_2d-1][3]; p01 <= mem[row_delay_2d-1][col_delay_2d-1][4]; p02 <= mem[row_delay_2d][col_delay_2d-1][5];
+            p10 <= mem[row_delay_2d-2][col_delay_2d][6]; p11 <= mem[row_delay_2d-1][col_delay_2d][7]; p12 <= mem[row_delay_2d][col_delay_2d][8];
+            p20 <= mem[row_delay_2d-2][col_delay_2d+1][0]; p21 <= mem[row_delay_2d-1][col_delay_2d+1][1]; p22 <= mem[row_delay_2d][col_delay_2d+1][2];  
         end
         else begin
             p00 <= 0; p01 <= 0; p02 <= 0;
@@ -106,7 +108,7 @@ always@(posedge clk) begin
     end
 end
 
-// stage 2
+// stage 3
 add_weighted u1(
     .clk(clk),
     .p0(p00),
@@ -122,9 +124,8 @@ add_weighted u1(
 );
 
 
-always@(conv_result) begin
+always@(conv_result)
     data_out <= conv_result;
-end
 
 endmodule
 
