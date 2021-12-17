@@ -1,6 +1,6 @@
 `include "csa32.v"
 
-module conv1 (
+module conv2 (
     input [15:0] data_in, // 16-bit
     input [4:0] row,
     input [1:0] col,
@@ -59,7 +59,7 @@ always@(posedge clk) begin
 end
 
 // stage 0
-kernel_pixel_0 u0(
+kernel_pixel_1 u0(
     .clk(clk),
     .pixel(data_in),
     .weighted_pixel(mem_pixel)
@@ -104,7 +104,7 @@ always@(posedge clk) begin
 end
 
 // stage 3
-add_weighted_0 u1(
+add_weighted_1 u1(
     .clk(clk),
     .p0(p00),
     .p1(p01),
@@ -126,22 +126,22 @@ endmodule
 
 
 
-module kernel_pixel_0(
+module kernel_pixel_1(
     input clk,
     input signed [15:0] pixel,
     output reg signed [32*3*3-1:0] weighted_pixel
 );
 
 wire signed [15:0] weight [0:2][0:2];
-assign weight[0][0] = -16'd4972;
-assign weight[0][1] = -16'd622;
-assign weight[0][2] = 16'd2988;
-assign weight[1][0] = -16'd2478;
-assign weight[1][1] = 16'd1703;
-assign weight[1][2] = 16'd2519;
-assign weight[2][0] = 16'd2008;
-assign weight[2][1] = 16'd1748;
-assign weight[2][2] = 16'd79;
+assign weight[0][0] = 16'd1456;
+assign weight[0][1] = 16'd2974;
+assign weight[0][2] = -16'd2176;
+assign weight[1][0] = 16'd1016;
+assign weight[1][1] = 16'd4777;
+assign weight[1][2] = 16'd2387;
+assign weight[2][0] = -16'd5177;
+assign weight[2][1] = -16'd2599;
+assign weight[2][2] = 16'd2010;
 
 generate
     genvar i, j;
@@ -156,7 +156,7 @@ endgenerate
 endmodule
 
 
-module add_weighted_0(
+module add_weighted_1(
     input clk,
     input [31:0] p0,
     input [31:0] p1,
@@ -175,7 +175,7 @@ wire signed [31:0] bias;
 wire [31:0] tmp [0:8];
 wire [8:0] ov;
 
-assign bias = -32'd58730196;
+assign bias = -32'd44284524;
 
 csa32 u0(p0,p1,tmp[0], ov[0]);
 csa32 u1(p2,p3,tmp[1], ov[1]);
